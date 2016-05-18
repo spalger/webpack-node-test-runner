@@ -31,7 +31,7 @@ export class TestRunner extends EventEmitter {
     this.child.kill() // :'(
   }
 
-  onProcExit() {
-    this.emit('complete')
+  onProcExit(code) {
+    this.emit('complete', !code)
   }
 }

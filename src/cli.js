@@ -7,6 +7,7 @@ import supportsColor from 'supports-color'
 
 import { TestRunner } from './TestRunner'
 import { PendingTests } from './PendingTests'
+import { Log } from './Log'
 import { findJsOutput } from './lib'
 
 const argv = yargs
@@ -43,20 +44,32 @@ let firstRun = true
 
 const compiler = webpack(webpackConfig)
 const pending = new PendingTests()
+const log = new Log()
 
 compiler.plugin('compile', () => {
-  console.log('rebundling ...')
+  if (!firstRun && argv.clear) {
+    log.clearScreen()
+  }
 
   if (runner) {
+    log.warning('aborting build')
     runner.abort()
+  }
+
+  if (!firstRun) {
+    log.progress('webpack re-bundling')
+  } else {
+    log.progress('webpack bundling')
   }
 
   runner = new TestRunner()
 })
 
 const onDone = (err, stats) => {
+  log.endProgress()
+
   if (argv.stats || stats.hasErrors()) {
-    console.log(stats.toString({
+    log.write(stats.toString({
       cached: false,
       cachedAssets: false,
       colors: supportsColor,
@@ -64,7 +77,7 @@ const onDone = (err, stats) => {
   }
 
   if (stats.hasErrors()) {
-    console.log('skipping tests because of bundle errors')
+    log.error('skipping tests because of bundle errors')
     return
   }
 
@@ -75,7 +88,7 @@ const onDone = (err, stats) => {
     runner.test(false, cliArgs)
   } else {
     const idsToTest = pending.addFromStats(stats)
-    console.log('testing %d rebuilt modules', idsToTest.length)
+    log.info('testing %d rebuilt modules', idsToTest.length)
     runner.test(idsToTest, cliArgs)
   }
 

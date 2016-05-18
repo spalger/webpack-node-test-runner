@@ -18,6 +18,8 @@
   "author": "Spencer Alger <email@spalger.com>",
   "license": "MIT",
   "dependencies": {
+    "log-symbols": "^1.0.2",
+    "log-update": "^1.0.2",
     "supports-color": "^3.1.2",
     "yargs": "^4.7.1"
   },
