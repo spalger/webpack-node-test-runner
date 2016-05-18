@@ -107,7 +107,7 @@ export class Runner {
     }
 
     const idsToTest = testQueue.addFromStats(stats)
-    if (idsToTest.length > 1) {
+    if (!idsToTest.length) {
       log.info('no tests to run based on the changes')
       return false
     }
