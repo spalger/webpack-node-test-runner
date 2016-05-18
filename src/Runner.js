@@ -52,12 +52,16 @@ export class Runner {
     const { runCount, log } = this
 
     this.compileCount += 1
-    if (runCount > 1) {
+    if (runCount > 0) {
       log.clearScreen()
     }
 
-    this.abortRun()
-    if (runCount > 1) {
+    if (this.activeRun) {
+      this.log.warning('aborting test run')
+      this.abortRun()
+    }
+
+    if (runCount > 0) {
       log.progress('webpack re-bundling')
     } else {
       log.progress('webpack bundling')
@@ -91,8 +95,8 @@ export class Runner {
 
   abortRun() {
     if (this.activeRun) {
-      this.log.warning('aborting test run')
       this.activeRun.abort()
+      this.activeRun = null
     }
   }
 
@@ -109,6 +113,7 @@ export class Runner {
     const idsToTest = testQueue.addFromStats(stats)
     if (!idsToTest.length) {
       log.info('no tests to run based on the changes')
+      this.abortRun()
       return false
     }
 
