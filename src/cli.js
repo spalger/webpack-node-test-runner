@@ -24,6 +24,11 @@ const argv = yargs
       default: false,
       describe: 'rebuild on change, and re-test changes',
     },
+    silent: {
+      boolean: true,
+      default: false,
+      describe: 'prevent all output',
+    },
   })
   .help()
   .argv
@@ -35,6 +40,7 @@ const runner = new Runner({
   webpackConfigFile: argv.config,
 
   log: {
+    silent: argv.silent,
     clear: argv.clear,
     webpackStats: argv.stats,
   },

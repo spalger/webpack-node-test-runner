@@ -12,10 +12,13 @@ export class Log {
     this.config = defaults(config || {}, {
       clear: true,
       webpackStats: true,
+      silent: false,
     })
   }
 
   progress(msg) {
+    if (this.config.silent) return
+
     const tick = () => {
       progressFrames.unshift(progressFrames.pop())
 
@@ -57,6 +60,7 @@ export class Log {
 
   write(...args) {
     this.endProgress()
+    if (this.config.silent) return
     console.log(...args)
   }
 
@@ -73,11 +77,12 @@ export class Log {
   clearScreen() {
     this.endProgress()
 
-    if (this.config.clear) {
-      // clear screen
-      process.stdout.write('\u001b[2J')
-      // set cursor position
-      process.stdout.write('\u001b[1;0H')
-    }
+    if (this.config.silent) return
+    if (!this.config.clear) return
+
+    // clear screen
+    process.stdout.write('\u001b[2J')
+    // set cursor position
+    process.stdout.write('\u001b[1;0H')
   }
 }
