@@ -25,6 +25,11 @@ const argv = yargs
       default: true,
       describe: 'Don\'t clear the console before a rebuild',
     },
+    watch: {
+      boolean: true,
+      default: false,
+      describe: 'rebuild on change, and re-test changes',
+    },
   })
   .help()
   .argv
@@ -33,8 +38,8 @@ const argv = yargs
 const webpackConfig = require(resolve(process.cwd(), argv.config))
 /* eslint-enable global-require */
 
-let activeRun
-let firstRun = false
+let runner
+let firstRun = true
 
 const compiler = webpack(webpackConfig)
 const pending = new PendingTests()
@@ -42,14 +47,14 @@ const pending = new PendingTests()
 compiler.plugin('compile', () => {
   console.log('rebundling ...')
 
-  if (activeRun) {
-    activeRun.abort()
+  if (runner) {
+    runner.abort()
   }
 
-  activeRun = new TestRunner()
+  runner = new TestRunner()
 })
 
-compiler.watch({}, (err, stats) => {
+const onDone = (err, stats) => {
   if (argv.stats || stats.hasErrors()) {
     console.log(stats.toString({
       cached: false,
@@ -63,22 +68,25 @@ compiler.watch({}, (err, stats) => {
     return
   }
 
-  const idsToTest = pending.addFromStats(stats)
-  const bundles = findJsOutput(stats)
+  const cliArgs = [...argv._, ...findJsOutput(stats)]
 
   if (firstRun) {
     firstRun = false
+    runner.test(false, cliArgs)
   } else {
+    const idsToTest = pending.addFromStats(stats)
     console.log('testing %d rebuilt modules', idsToTest.length)
+    runner.test(idsToTest, cliArgs)
   }
 
-  activeRun.test(idsToTest, [
-    ...argv._,
-    ...bundles,
-  ])
-
-  activeRun.on('complete', () => {
-    activeRun = null
+  runner.on('complete', () => {
+    runner = null
     pending.clear()
   })
-})
+}
+
+if (argv.watch) {
+  compiler.watch({}, onDone)
+} else {
+  compiler.run(onDone)
+}
