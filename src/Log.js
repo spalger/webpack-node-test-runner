@@ -1,18 +1,27 @@
 import logUpdate from 'log-update'
 import logSymbols from 'log-symbols'
 import { format } from 'util'
+import supportsColor from 'supports-color'
+import defaults from 'lodash.defaults'
 
 let timerId
-const frames = ['-', '\\', '|', '/']
+const progressFrames = ['-', '\\', '|', '/']
 
 export class Log {
+  constructor(config) {
+    this.config = defaults(config || {}, {
+      clear: true,
+      webpackStats: true,
+    })
+  }
+
   progress(msg) {
     const tick = () => {
-      frames.unshift(frames.pop())
+      progressFrames.unshift(progressFrames.pop())
 
       logUpdate(
         '\n' +
-        `    ${msg} ${frames[0]}\n` +
+        `    ${msg} ${progressFrames[0]}\n` +
         '\n'
       )
 
@@ -51,12 +60,24 @@ export class Log {
     console.log(...args)
   }
 
+  webpackStats(stats) {
+    if (this.config.webpackStats || stats.hasErrors()) {
+      this.write(stats.toString({
+        cached: false,
+        cachedAssets: false,
+        colors: supportsColor,
+      }))
+    }
+  }
+
   clearScreen() {
     this.endProgress()
 
-    // clear screen
-    process.stdout.write('\u001b[2J')
-    // set cursor position
-    process.stdout.write('\u001b[1;0H')
+    if (this.config.clear) {
+      // clear screen
+      process.stdout.write('\u001b[2J')
+      // set cursor position
+      process.stdout.write('\u001b[1;0H')
+    }
   }
 }

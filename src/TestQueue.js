@@ -1,5 +1,5 @@
 
-export class PendingTests {
+export class TestQueue {
   constructor() {
     this.all = new Set()
   }
@@ -11,7 +11,6 @@ export class PendingTests {
 
     modules.forEach(m => {
       if (!m.rawRequest) return
-
       idsByRequest.set(m.rawRequest, m.id)
       if (m.built) all.add(m.rawRequest)
     })
