@@ -28,3 +28,7 @@ webpack-node-test-runner --config ./webpack_config/test --watch -- --reporter do
 ```
 
 Use `webpack-node-test-runner --help` to see all options. Options defined after the `--` are sent to mocha, so things like `--reporter` and `--ui` should be defined here.
+
+## inspiration
+
+This project, especially the feature to only re-run certain tests, was inspired by [webpack-mocha](https://www.npmjs.com/package/mocha-webpack). I had intended to add support for `devtool: "eval"` to that project but found the approach different from what I had in mind, and it was simple enough to re-write.
