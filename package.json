@@ -1,6 +1,6 @@
 {
   "name": "webpack-node-test-runner",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Tool to help running tests with webpack",
   "main": "./dist/cli.js",
   "scripts": {
