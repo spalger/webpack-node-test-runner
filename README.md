@@ -1,4 +1,4 @@
-# webpack-test-runner
+# webpack-node-test-runner
 
 Simple CLI that helps run your tests in node after bundling with webpack, and then rerun test files when they change.
 
@@ -21,13 +21,13 @@ Simple CLI that helps run your tests in node after bundling with webpack, and th
 
 ## run
 
-Once setup use `webpack-test-runner` from the command line:
+Once setup use `webpack-node-test-runner` from the command line:
 
 ```sh
-webpack-test-runner --config ./webpack_config/test --watch -- --reporter dot
+webpack-node-test-runner --config ./webpack_config/test --watch -- --reporter dot
 ```
 
-Use `webpack-test-runner --help` to see all options. Options defined after the `--` are sent to mocha, so things like `--reporter` and `--ui` should be defined here.
+Use `webpack-node-test-runner --help` to see all options. Options defined after the `--` are sent to mocha, so things like `--reporter` and `--ui` should be defined here.
 
 ## TODO
  - rerun tests that depend on changed files

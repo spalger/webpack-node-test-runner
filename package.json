@@ -8,7 +8,7 @@
     "prepublish": "npm run build"
   },
   "bin": {
-    "webpack-test-runner": "./dist/cli.js"
+    "webpack-node-test-runner": "./dist/cli.js"
   },
   "keywords": [
     "webpack",
