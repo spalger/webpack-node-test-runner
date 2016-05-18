@@ -17,20 +17,23 @@ export class Runner {
       log: {}, // logging config
     })
 
+    const configFilePath = require.resolve(resolve(config.cwd, config.webpackConfigFile))
+    this.configFile = require(configFilePath) // eslint-disable-line global-require
+    delete require.cache[configFilePath]
+
     this.onWebpackStart = this.onWebpackStart.bind(this)
     this.onWebpackDone = this.onWebpackDone.bind(this)
 
+    this.runCount = 0
+    this.compileCount = 0
     this.activeRun = null
-    this.runCounter = 0
-    this.testQueue = new TestQueue()
+    this.testQueue = new TestQueue(this)
     this.log = new Log(this.config.log)
   }
 
   init() {
-    const { config, onWebpackStart, onWebpackDone } = this
+    const { config, configFile, onWebpackStart, onWebpackDone } = this
 
-    const configFilePath = resolve(config.cwd, config.webpackConfigFile)
-    const configFile = require(configFilePath) // eslint-disable-line global-require
     this.compiler = webpack(configFile)
 
     // get notified at the begining of compilation
@@ -38,7 +41,7 @@ export class Runner {
 
     if (config.watch) {
       // watch and notify of each rebuild
-      this.compiler.watch({}, onWebpackDone)
+      this.watcher = this.compiler.watch({}, onWebpackDone)
     } else {
       // run once and notify of completion
       this.compiler.run(onWebpackDone)
@@ -46,28 +49,25 @@ export class Runner {
   }
 
   onWebpackStart() {
-    const { runCounter, log } = this
+    const { runCount, log } = this
 
-    if (runCounter > 0) {
+    this.compileCount += 1
+    if (runCount > 1) {
       log.clearScreen()
     }
 
-    if (this.activeRun) {
-      log.warning('aborting test run')
-      this.activeRun.abort()
-    }
-
-    if (runCounter > 0) {
+    this.abortRun()
+    if (runCount > 1) {
       log.progress('webpack re-bundling')
     } else {
       log.progress('webpack bundling')
     }
 
-    this.activeRun = new TestRun()
+    this.createRun()
   }
 
   onWebpackDone(err, stats) {
-    const { config, log, testQueue, activeRun } = this
+    const { log, testQueue, activeRun } = this
 
     log.endProgress()
     log.webpackStats(stats)
@@ -77,32 +77,62 @@ export class Runner {
       return
     }
 
-    const cliArgs = [...config.execArgv, ...findJsOutput(stats)]
-    const runCount = this.runCounter++
+    if (this.startRun(stats)) {
+      activeRun.on('complete', () => {
+        this.activeRun = null
+        testQueue.clear()
+      })
+    }
+  }
 
-    if (runCount > 0) {
-      const idsToTest = testQueue.addFromStats(stats)
-      if (idsToTest.length > 0) {
-        log.info('no tests to run based on the changes')
-      } else {
-        log.info('running %d test modules', idsToTest.length)
-        activeRun.test(idsToTest, cliArgs)
-      }
-    } else {
+  createRun() {
+    this.activeRun = new TestRun(this)
+  }
+
+  abortRun() {
+    if (this.activeRun) {
+      this.log.warning('aborting test run')
+      this.activeRun.abort()
+    }
+  }
+
+  startRun(stats) {
+    const { activeRun, log, testQueue } = this
+    const runCount = ++this.runCount
+
+    if (runCount === 1) {
       // test everything
-      activeRun.test(false, cliArgs)
+      activeRun.test(false, this.makeArgv(stats))
+      return true
     }
 
-    activeRun.on('complete', () => {
-      this.activeRun = null
-      testQueue.clear()
-    })
+    const idsToTest = testQueue.addFromStats(stats)
+    if (idsToTest.length > 1) {
+      log.info('no tests to run based on the changes')
+      return false
+    }
+
+    log.info('running %d test modules', idsToTest.length)
+    activeRun.test(idsToTest, this.makeArgv(stats))
+    return true
+  }
+
+  makeArgv(stats) {
+    return [...this.config.execArgv, ...findJsOutput(stats)]
   }
 
   abort() {
-    if (this.activeRun) {
-      this.activeRun.abort()
-      this.activeRun = null
-    }
+    return new Promise(res => {
+      if (this.activeRun) {
+        this.activeRun.abort()
+        this.activeRun = null
+      }
+
+      if (this.watcher) {
+        this.watcher.close(res)
+      } else {
+        res()
+      }
+    })
   }
 }
