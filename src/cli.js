@@ -2,38 +2,13 @@
 
 import webpack from 'webpack'
 import { resolve } from 'path'
-import yargs from 'yargs'
 import supportsColor from 'supports-color'
 
 import { TestRunner } from './TestRunner'
 import { PendingTests } from './PendingTests'
 import { Log } from './Log'
 import { findJsOutput } from './lib'
-
-const argv = yargs
-  .options({
-    config: {
-      default: 'webpack.config.js',
-      describe: 'path to webpack config',
-    },
-    stats: {
-      boolean: true,
-      default: true,
-      describe: 'Don\'t show the webpack build stats when successfull',
-    },
-    clear: {
-      boolean: true,
-      default: true,
-      describe: 'Don\'t clear the console before a rebuild',
-    },
-    watch: {
-      boolean: true,
-      default: false,
-      describe: 'rebuild on change, and re-test changes',
-    },
-  })
-  .help()
-  .argv
+import { argv } from './argv'
 
 /* eslint-disable global-require */
 const webpackConfig = require(resolve(process.cwd(), argv.config))
@@ -103,3 +78,7 @@ if (argv.watch) {
 } else {
   compiler.run(onDone)
 }
+
+process.on('exit', () => {
+  if (runner) runner.abort()
+})
