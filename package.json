@@ -5,6 +5,7 @@
   "main": "./dist/cli.js",
   "scripts": {
     "build": "rm -rf dist; babel src -d dist",
+    "test": "mocha -r babel-register --timeout 20000",
     "prepublish": "npm run build"
   },
   "bin": {
