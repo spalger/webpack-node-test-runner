@@ -1,10 +1,9 @@
 {
   "name": "webpack-test-runner",
-  "version": "0.0.1",
-  "description": "Tool to iteratively running tests as they are rebuilt",
+  "version": "0.0.0",
+  "description": "Tool to help running tests with webpack",
   "main": "./dist/cli.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rm -rf dist; babel src -d dist",
     "prepublish": "npm run build"
   },
