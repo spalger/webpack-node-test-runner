@@ -22,7 +22,7 @@ const argv = yargs
     },
     clear: {
       boolean: true,
-      default: supportsColor,
+      default: true,
       describe: 'Don\'t clear the console before a rebuild',
     },
   })
@@ -54,7 +54,7 @@ compiler.watch({}, (err, stats) => {
     console.log(stats.toString({
       cached: false,
       cachedAssets: false,
-      colors: argv.colors,
+      colors: supportsColor,
     }))
   }
 
