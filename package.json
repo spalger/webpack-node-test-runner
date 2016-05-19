@@ -5,8 +5,10 @@
   "main": "./dist/cli.js",
   "scripts": {
     "build": "rm -rf dist; babel src -d dist --ignore __tests__",
-    "lint": "eslint src",
-    "test": "npm run lint && mocha -r babel-register --timeout 20000 src/**/__tests__/**/*.js",
+    "lint": "npm run eslint",
+    "eslint": "eslint src",
+    "mocha": "mocha -r babel-register --timeout 20000 src/**/__tests__/**/*.js",
+    "test": "npm run eslint && npm run mocha",
     "prepublish": "npm run build"
   },
   "bin": {
