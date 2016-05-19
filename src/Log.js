@@ -82,13 +82,9 @@ export class Log {
 
   clearScreen() {
     this.endProgress()
-
-    if (this.config.silent) return
-    if (!this.config.clear) return
-
-    // clear screen
-    process.stdout.write('\u001b[2J')
-    // set cursor position
-    process.stdout.write('\u001b[1;0H')
+    if (!this.config.silent && this.config.clear) {
+      // clear screen and update cursor position
+      this.to.write('\u001b[2J\u001b[1;0H')
+    }
   }
 }
