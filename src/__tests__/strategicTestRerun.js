@@ -1,30 +1,34 @@
-import { Runner } from '../src/Runner'
+/* eslint-env mocha */
+
+import { Runner } from '../Runner'
 import { resolve } from 'path'
 import touch from 'touch'
 import expect, { deepEqual } from 'expect-to'
 import del from 'del'
 
-const rel = resolve.bind(null, __dirname, 'fixtures')
 const moduleId = (stats, path) =>
-  stats.compilation.modules.find(m => m.resource === rel(path)).id
+  stats.compilation.modules.find(m => m.resource === path).id
 
 let runner
-function createRunnerSetup(base) {
-  beforeEach(() => del(rel(base, 'dist')))
-  afterEach(() => del(rel(base, 'dist')))
+function createRunnerSetup(fixture) {
+  beforeEach(() => del(fixture('dist')))
+  afterEach(() => del(fixture('dist')))
 
   beforeEach(() =>
     Promise.resolve()
     .then(() =>
       new Promise(res =>
         // stupid timeout that seems to be required
-        // for webpack to behave predictably
+        // for webpack to behave predictably, otherwise it
+        // won't rebuild files... probably something to do with
+        // fsevents maintaining (and needing to maintain) process
+        // level state
         setTimeout(res, runner ? 5500 : 0)
       )
     )
     .then(() => {
       runner = new Runner({
-        cwd: rel(base),
+        cwd: fixture(),
         watch: true,
         webpackConfigFile: 'webpack.config.js',
         log: {
@@ -40,9 +44,10 @@ function createRunnerSetup(base) {
   afterEach(() => runner.abort())
 }
 
-describe('TestQueue', () => {
+describe('Strategic Test Rerun', () => {
   describe('basic-project', () => {
-    createRunnerSetup('basic-project')
+    const fixture = resolve.bind(null, __dirname, '../../fixtures/basic-project')
+    createRunnerSetup(fixture)
 
     it('finds immediate dependencies based on changed file', done => {
       runner.onWebpackDone = (err, stats) => {
@@ -56,11 +61,11 @@ describe('TestQueue', () => {
         }
 
         if (runner.compileCount === 1) {
-          setTimeout(() => touch.sync(rel('basic-project/src/repeatString.js')), 200)
+          setTimeout(() => touch.sync(fixture('src/repeatString.js')), 200)
         } else {
           const idsToTest = runner.testQueue.addFromStats(stats)
           expect(idsToTest).to(deepEqual([
-            moduleId(stats, 'basic-project/src/repeatString.test.js'),
+            moduleId(stats, fixture('src/repeatString.test.js')),
           ]))
           done()
         }
@@ -71,7 +76,8 @@ describe('TestQueue', () => {
   })
 
   describe('multi-level-project', () => {
-    createRunnerSetup('multi-level-project')
+    const fixture = resolve.bind(null, __dirname, '../../fixtures/multi-level-project')
+    createRunnerSetup(fixture)
 
     it('finds extended dependencies based on changed file', done => {
       runner.onWebpackDone = (err, stats) => {
@@ -83,12 +89,12 @@ describe('TestQueue', () => {
         }
 
         if (runner.compileCount === 1) {
-          setTimeout(() => touch.sync(rel('multi-level-project/src/repeatString.js')), 200)
+          setTimeout(() => touch.sync(fixture('src/repeatString.js')), 200)
         } else {
           const idsToTest = runner.testQueue.addFromStats(stats)
           expect(idsToTest).to(deepEqual([
-            moduleId(stats, 'multi-level-project/src/leftPad.test.js'),
-            moduleId(stats, 'multi-level-project/src/repeatString.test.js'),
+            moduleId(stats, fixture('src/leftPad.test.js')),
+            moduleId(stats, fixture('src/repeatString.test.js')),
           ]))
           done()
         }
