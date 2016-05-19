@@ -90,7 +90,9 @@ export class Runner {
   }
 
   createRun() {
-    this.activeRun = new TestRun(this)
+    this.activeRun = new TestRun(this.log, {
+      cwd: this.config.cwd,
+    })
   }
 
   abortRun() {

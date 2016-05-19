@@ -1,25 +1,29 @@
 import cp from 'child_process'
 import { EventEmitter } from 'events'
 import { resolve } from 'path'
+import defaults from 'lodash.defaults'
 
 const worker = resolve(__dirname, './worker.js')
 
 export class TestRun extends EventEmitter {
-  constructor(runner) {
+  constructor(log, config) {
     super()
 
-    this.runner = runner
+    this.log = log
+    this.config = defaults(config || {}, {
+      cwd: process.cwd(),
+    })
 
     this.onChildExit = this.onChildExit.bind(this)
-    this.child = cp.fork(worker, [], { cwd: this.runner.config.cwd })
+    this.child = cp.fork(worker, [], { cwd: this.config.cwd })
     this.child.on('exit', this.onChildExit)
   }
 
   test(idsToTest, argv) {
     if (idsToTest) {
-      this.runner.log.info('running %d test modules', idsToTest.length)
+      this.log.info('running %d test modules', idsToTest.length)
     } else {
-      this.runner.log.info('running all test')
+      this.log.info('running all test')
     }
 
     this.child.send({ idsToTest, argv })
