@@ -43,5 +43,16 @@
     "memory-fs": "^0.3.0",
     "mocha": "^2.4.5",
     "touch": "^1.0.0"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spalger/webpack-node-test-runner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/spalger/webpack-node-test-runner/issues"
+  },
+  "homepage": "https://github.com/spalger/webpack-node-test-runner#readme"
 }
