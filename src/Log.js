@@ -19,6 +19,11 @@ export class Log {
   progress(msg) {
     if (this.config.silent) return
 
+    if (!this.config.progress) {
+      this.write(`${msg} ...`)
+      return
+    }
+
     const tick = () => {
       progressFrames.unshift(progressFrames.pop())
 

@@ -29,6 +29,17 @@ const argv = yargs
       default: false,
       describe: 'prevent all output',
     },
+    interactive: {
+      boolean: true,
+      default: process.stdout.isTTY,
+      describe: (
+        'should logging be done in an interactive way? ' +
+        'using --no-interactive will cause progress and ' +
+        'clear to be disabled so that non-TTY stdout ' +
+        'consumers don\'t get littered with useless ' +
+        'output. The default is based on `process.stdout.isTTY`'
+      ),
+    },
   })
   .help()
   .argv
@@ -41,7 +52,8 @@ const runner = new Runner({
 
   log: {
     silent: argv.silent,
-    clear: argv.clear,
+    clear: argv.interactive && argv.clear,
+    progress: argv.interactive,
     webpackStats: argv.stats,
   },
 })
