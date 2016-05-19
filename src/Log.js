@@ -67,7 +67,7 @@ export class Log {
   write(...args) {
     this.endProgress()
     if (this.config.silent) return
-    this.to.write(...args)
+    this.to.write(format(...args))
   }
 
   webpackStats(stats) {
