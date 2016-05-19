@@ -117,7 +117,6 @@ export class Runner {
       return false
     }
 
-    log.info('running %d test modules', idsToTest.length)
     activeRun.test(idsToTest, this.makeArgv(stats))
     return true
   }

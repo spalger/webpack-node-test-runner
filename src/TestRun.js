@@ -8,13 +8,20 @@ export class TestRun extends EventEmitter {
   constructor(runner) {
     super()
 
-    this.onChildExit = this.onChildExit.bind(this)
+    this.runner = runner
 
-    this.child = cp.fork(worker, [], { cwd: runner.config.cwd })
+    this.onChildExit = this.onChildExit.bind(this)
+    this.child = cp.fork(worker, [], { cwd: this.runner.config.cwd })
     this.child.on('exit', this.onChildExit)
   }
 
   test(idsToTest, argv) {
+    if (idsToTest) {
+      this.runner.log.info('running %d test modules', idsToTest.length)
+    } else {
+      this.runner.log.info('running all test')
+    }
+
     this.child.send({ idsToTest, argv })
   }
 
