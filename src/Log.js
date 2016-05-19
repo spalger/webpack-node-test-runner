@@ -8,7 +8,8 @@ let timerId
 const progressFrames = ['-', '\\', '|', '/']
 
 export class Log {
-  constructor(config) {
+  constructor(to, config) {
+    this.to = to
     this.config = defaults(config || {}, {
       clear: true,
       webpackStats: true,
@@ -66,7 +67,7 @@ export class Log {
   write(...args) {
     this.endProgress()
     if (this.config.silent) return
-    console.log(...args)
+    this.to.write(...args)
   }
 
   webpackStats(stats) {

@@ -28,7 +28,7 @@ export class Runner {
     this.compileCount = 0
     this.activeRun = null
     this.testQueue = new TestQueue(this)
-    this.log = new Log(this.config.log)
+    this.log = new Log(process.stdout, this.config.log)
   }
 
   init() {
