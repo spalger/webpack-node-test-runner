@@ -82,9 +82,13 @@ export class Runner {
     }
 
     if (this.startRun(stats)) {
-      activeRun.on('complete', () => {
+      activeRun.on('complete', (exitCode) => {
         this.activeRun = null
         testQueue.clear()
+
+        if (!this.config.watch) {
+          process.exit(exitCode)
+        }
       })
     }
   }

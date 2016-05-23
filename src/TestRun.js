@@ -35,6 +35,6 @@ export class TestRun extends EventEmitter {
   }
 
   onChildExit(code) {
-    this.emit('complete', !code)
+    this.emit('complete', code)
   }
 }
