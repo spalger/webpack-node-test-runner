@@ -21,7 +21,7 @@ export class Log {
     if (this.config.silent) return
 
     if (!this.config.progress) {
-      this.write(`${msg} ...`)
+      this.write(`${msg} ...\n`)
       return
     }
 

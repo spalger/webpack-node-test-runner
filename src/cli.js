@@ -29,6 +29,11 @@ const argv = yargs
       default: false,
       describe: 'prevent all output',
     },
+    manual: {
+      boolean: true,
+      default: false,
+      describe: 'Print the command to run mocha in a seperate process',
+    },
     interactive: {
       boolean: true,
       default: process.stdout.isTTY,
@@ -48,6 +53,7 @@ const runner = new Runner({
   cwd: process.cwd(),
   execArgv: argv._,
   watch: argv.watch,
+  manual: argv.manual,
   webpackConfigFile: argv.config,
 
   log: {

@@ -1,6 +1,8 @@
 import webpack from 'webpack'
 import { resolve } from 'path'
 import defaults from 'lodash.defaults'
+import once from 'lodash.once'
+import shellEscape from 'shell-escape'
 
 import { TestRun } from './TestRun'
 import { TestQueue } from './TestQueue'
@@ -13,6 +15,7 @@ export class Runner {
       cwd: process.cwd(),
       execArgv: [],
       watch: true,
+      manual: false,
       webpackConfigFile: 'webpack.config.js',
       log: {}, // logging config
     })
@@ -23,6 +26,7 @@ export class Runner {
 
     this.onWebpackStart = this.onWebpackStart.bind(this)
     this.onWebpackDone = this.onWebpackDone.bind(this)
+    this.logManualCommand = once(this.logManualCommand.bind(this))
 
     this.runCount = 0
     this.compileCount = 0
@@ -49,7 +53,7 @@ export class Runner {
   }
 
   onWebpackStart() {
-    const { runCount, log } = this
+    const { runCount, log, config: { manual } } = this
 
     this.compileCount += 1
     if (runCount > 0) {
@@ -67,7 +71,9 @@ export class Runner {
       log.progress('webpack bundling')
     }
 
-    this.createRun()
+    if (!manual) {
+      this.createRun()
+    }
   }
 
   onWebpackDone(err, stats) {
@@ -107,7 +113,13 @@ export class Runner {
   }
 
   startRun(stats) {
-    const { activeRun, log, testQueue } = this
+    const { activeRun, log, testQueue, config: { manual } } = this
+
+    if (manual) {
+      this.logManualCommand(stats)
+      return false
+    }
+
     const runCount = ++this.runCount
 
     if (runCount === 1) {
@@ -144,5 +156,20 @@ export class Runner {
         res()
       }
     })
+  }
+
+  logManualCommand(stats) {
+    const { watch, execArgv, cwd } = this.config
+    const argv = shellEscape([
+      ...(watch ? ['--watch'] : []),
+      ...execArgv,
+    ])
+
+    this.log.info(`Run the following in another shell to execute the tests
+
+  cd ${cwd}
+  mocha ${argv}${argv ? ' ' : ''}${findJsOutput(stats).join(' ')}
+
+`)
   }
 }
