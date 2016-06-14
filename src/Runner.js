@@ -1,5 +1,5 @@
 import webpack from 'webpack'
-import { resolve } from 'path'
+import { relative, resolve } from 'path'
 import defaults from 'lodash/defaults'
 import shellEscape from 'shell-escape'
 import reportable from 'reportable'
@@ -14,6 +14,7 @@ export class Runner {
       'initialized',
       'webpackStart',
       'webpackDone',
+      'testRunStart',
       'testRunAborted',
       'testRunSkipped',
       'testRunComplete',
@@ -141,6 +142,7 @@ export class Runner {
       return false
     }
 
+    this.report.testRunStart()
     activeRun.test(idsToTest, this.makeArgv(stats))
     return true
   }
@@ -166,15 +168,23 @@ export class Runner {
 
   createManualCommand(stats) {
     const { watch, execArgv, cwd } = this.config
+    const r = path => relative(process.cwd(), path)
+
+    const relCwd = watch ? cwd : r(cwd)
+    const testOutput = findJsOutput(stats).map(r)
     const argv = shellEscape([
       ...(watch ? ['--watch'] : []),
       ...execArgv,
     ])
 
-    return `Run the following in another shell to execute the tests
+    const cmds = [
+      relCwd ? `cd ${relCwd}` : '',
+      `mocha ${argv}${argv ? ' ' : ''}${testOutput.join(' ')}`,
+    ].filter(Boolean)
 
-  cd ${cwd}
-  mocha ${argv}${argv ? ' ' : ''}${findJsOutput(stats).join(' ')}
+    return `Run the following ${watch ? 'in another shell ' : ''}to execute the tests
+
+  ${cmds.join('\n  ')}
 
 `
   }

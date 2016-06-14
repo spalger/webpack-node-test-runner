@@ -23,7 +23,7 @@ export class Log {
         this.warning('aborting test run')
       },
 
-      testRunSkip: () => {
+      testRunSkipped: () => {
         this.info('no tests to run based on the changes')
       },
 
