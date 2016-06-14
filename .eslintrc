@@ -4,3 +4,4 @@ extends: "@spalger/personal/es6"
 rules:
   no-console: off
   spaced-comment: off
+  no-param-reassign: off

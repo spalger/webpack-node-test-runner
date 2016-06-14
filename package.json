@@ -21,10 +21,10 @@
   "author": "Spencer Alger <email@spalger.com>",
   "license": "MIT",
   "dependencies": {
-    "lodash.defaults": "^4.0.1",
-    "lodash.once": "^4.0.0",
+    "lodash": "^4.13.1",
     "log-symbols": "^1.0.2",
     "log-update": "^1.0.2",
+    "reportable": "^0.1.1",
     "shell-escape": "^0.2.0",
     "supports-color": "^3.1.2",
     "yargs": "^4.7.1"
@@ -48,6 +48,7 @@
     "expect-to": "^1.0.0",
     "memory-fs": "^0.3.0",
     "mocha": "^2.4.5",
+    "sinon": "^1.17.4",
     "touch": "^1.0.0",
     "writable-counter": "^0.1.1"
   },

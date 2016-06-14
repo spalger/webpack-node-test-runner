@@ -2,7 +2,7 @@ import logUpdate from 'log-update'
 import logSymbols from 'log-symbols'
 import { format } from 'util'
 import supportsColor from 'supports-color'
-import defaults from 'lodash.defaults'
+import defaults from 'lodash/defaults'
 
 let timerId
 const progressFrames = ['-', '\\', '|', '/']
@@ -14,6 +14,48 @@ export class Log {
       clear: true,
       webpackStats: true,
       silent: false,
+    })
+  }
+
+  logRunner(runner) {
+    runner.consumeReports({
+      testRunAborted: () => {
+        this.warning('aborting test run')
+      },
+
+      testRunSkip: () => {
+        this.info('no tests to run based on the changes')
+      },
+
+      testRunStart: ids => {
+        if (ids) {
+          this.info('running %d test modules', ids.length)
+        } else {
+          this.info('running all test')
+        }
+      },
+
+      webpackStart: runCount => {
+        if (!runCount) {
+          this.progress('webpack bundling')
+        } else {
+          this.clearScreen()
+          this.progress('webpack re-bundling')
+        }
+      },
+
+      webpackDone: stats => {
+        this.endProgress()
+        this.webpackStats(stats)
+
+        if (stats.hasErrors()) {
+          this.error('skipping tests because of bundle errors')
+        }
+      },
+
+      manualTestRunInstructions: cmd => {
+        this.info(cmd)
+      },
     })
   }
 

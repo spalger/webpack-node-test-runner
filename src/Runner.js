@@ -1,23 +1,31 @@
 import webpack from 'webpack'
 import { resolve } from 'path'
-import defaults from 'lodash.defaults'
-import once from 'lodash.once'
+import defaults from 'lodash/defaults'
 import shellEscape from 'shell-escape'
+import reportable from 'reportable'
 
 import { TestRun } from './TestRun'
 import { TestQueue } from './TestQueue'
-import { Log } from './Log'
 import { findJsOutput } from './lib'
 
 export class Runner {
   constructor(config) {
+    reportable(this, [
+      'initialized',
+      'webpackStart',
+      'webpackDone',
+      'testRunAborted',
+      'testRunSkipped',
+      'testRunComplete',
+      'manualTestRunInstructions',
+    ])
+
     this.config = defaults(config || {}, {
       cwd: process.cwd(),
       execArgv: [],
       watch: true,
       manual: false,
       webpackConfigFile: 'webpack.config.js',
-      log: {}, // logging config
     })
 
     const configFilePath = require.resolve(resolve(config.cwd, config.webpackConfigFile))
@@ -26,13 +34,11 @@ export class Runner {
 
     this.onWebpackStart = this.onWebpackStart.bind(this)
     this.onWebpackDone = this.onWebpackDone.bind(this)
-    this.logManualCommand = once(this.logManualCommand.bind(this))
 
     this.runCount = 0
     this.compileCount = 0
     this.activeRun = null
     this.testQueue = new TestQueue(this)
-    this.log = new Log(process.stdout, this.config.log)
   }
 
   init() {
@@ -50,26 +56,16 @@ export class Runner {
       // run once and notify of completion
       this.compiler.run(onWebpackDone)
     }
+
+    this.report.initialized()
   }
 
   onWebpackStart() {
-    const { runCount, log, config: { manual } } = this
+    const { runCount, config: { manual } } = this
 
     this.compileCount += 1
-    if (runCount > 0) {
-      log.clearScreen()
-    }
-
-    if (this.activeRun) {
-      this.log.warning('aborting test run')
-      this.abortRun()
-    }
-
-    if (runCount > 0) {
-      log.progress('webpack re-bundling')
-    } else {
-      log.progress('webpack bundling')
-    }
+    this.report.webpackStart(runCount)
+    this.abortRun()
 
     if (!manual) {
       this.createRun()
@@ -77,13 +73,15 @@ export class Runner {
   }
 
   onWebpackDone(err, stats) {
-    const { log, testQueue, activeRun } = this
+    const { testQueue, activeRun } = this
 
-    log.endProgress()
-    log.webpackStats(stats)
+    this.report.webpackDone(stats)
 
     if (stats.hasErrors()) {
-      log.error('skipping tests because of bundle errors')
+      this.abortRun()
+      if (!this.config.watch) {
+        process.exit(1)
+      }
       return
     }
 
@@ -91,6 +89,7 @@ export class Runner {
       activeRun.on('complete', (exitCode) => {
         this.activeRun = null
         testQueue.clear()
+        this.report.testRunComplete()
 
         if (!this.config.watch) {
           process.exit(exitCode)
@@ -100,12 +99,19 @@ export class Runner {
   }
 
   createRun() {
-    this.activeRun = new TestRun(this.log, {
+    this.activeRun = new TestRun({
       cwd: this.config.cwd,
     })
   }
 
   abortRun() {
+    if (this.activeRun) {
+      this.cancelRun()
+      this.report.testRunAborted()
+    }
+  }
+
+  cancelRun() {
     if (this.activeRun) {
       this.activeRun.abort()
       this.activeRun = null
@@ -113,10 +119,10 @@ export class Runner {
   }
 
   startRun(stats) {
-    const { activeRun, log, testQueue, config: { manual } } = this
+    const { activeRun, testQueue, config: { manual } } = this
 
     if (manual) {
-      this.logManualCommand(stats)
+      this.report.manualTestRunInstructions(this.createManualCommand(stats))
       return false
     }
 
@@ -130,8 +136,8 @@ export class Runner {
 
     const idsToTest = testQueue.addFromStats(stats)
     if (!idsToTest.length) {
-      log.info('no tests to run based on the changes')
-      this.abortRun()
+      this.cancelRun()
+      this.report.testRunSkipped()
       return false
     }
 
@@ -158,18 +164,18 @@ export class Runner {
     })
   }
 
-  logManualCommand(stats) {
+  createManualCommand(stats) {
     const { watch, execArgv, cwd } = this.config
     const argv = shellEscape([
       ...(watch ? ['--watch'] : []),
       ...execArgv,
     ])
 
-    this.log.info(`Run the following in another shell to execute the tests
+    return `Run the following in another shell to execute the tests
 
   cd ${cwd}
   mocha ${argv}${argv ? ' ' : ''}${findJsOutput(stats).join(' ')}
 
-`)
+`
   }
 }

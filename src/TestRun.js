@@ -1,15 +1,14 @@
 import cp from 'child_process'
 import { EventEmitter } from 'events'
 import { resolve } from 'path'
-import defaults from 'lodash.defaults'
+import defaults from 'lodash/defaults'
 
 const worker = resolve(__dirname, './worker.js')
 
 export class TestRun extends EventEmitter {
-  constructor(log, config) {
+  constructor(config) {
     super()
 
-    this.log = log
     this.config = defaults(config || {}, {
       cwd: process.cwd(),
     })
@@ -20,12 +19,6 @@ export class TestRun extends EventEmitter {
   }
 
   test(idsToTest, argv) {
-    if (idsToTest) {
-      this.log.info('running %d test modules', idsToTest.length)
-    } else {
-      this.log.info('running all test')
-    }
-
     this.child.send({ idsToTest, argv })
   }
 

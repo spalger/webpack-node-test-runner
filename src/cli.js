@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Runner } from './Runner'
+import { Log } from './Log'
 import yargs from 'yargs'
 
 const argv = yargs
@@ -55,15 +56,16 @@ const runner = new Runner({
   watch: argv.watch,
   manual: argv.manual,
   webpackConfigFile: argv.config,
-
-  log: {
-    silent: argv.silent,
-    clear: argv.interactive && argv.clear,
-    progress: argv.interactive,
-    webpackStats: argv.stats,
-  },
 })
 
+const log = new Log(process.stdout, {
+  silent: argv.silent,
+  clear: argv.interactive && argv.clear,
+  progress: argv.interactive,
+  webpackStats: argv.stats,
+})
+
+log.logRunner(runner)
 runner.init()
 
 process.on('exit', () => runner.abort())
